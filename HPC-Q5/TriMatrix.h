@@ -50,46 +50,31 @@ public:
     //Function: Calculate Multiplication of TriMatrix to Vector X
     vector<double> MUL(vector<double> X, int rank){
         double s=X.size();
-        double a;
-        double b;
         vector <double> B(s);
         //RANK 0 PROCESS
         if (rank==0){
-            //dissect X into upper vector
-            vector <double> Xu(s);
-            for (int i=0;i<s/2;i++){
-                Xu[i]=X[i];
-            }
-            a=Xu[s/2-1];
-            //send Xu last term to rank 1 process
-            MPI_Send(&a,1,MPI_DOUBLE,1,0,MPI_COMM_WORLD);
-            //receive Xl first term from rank 1 process
-            MPI_Recv(&b,1,MPI_DOUBLE,1,1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             //generate upper B
-            B[0]=(*diagm)[0]*Xu[0]+(*diagu)[0]*Xu[1];
-            for (int i=1;i<s/2-1;i++){
-                B[i]=(*diagl)[i-1]*Xu[i-1]+(*diagm)[i]*Xu[i]+(*diagu)[i]*Xu[i+1];
+            B[0]=(*diagm)[0]*X[0]+(*diagu)[0]*X[1];
+            for (int i=1;i<s/2;i++){
+                B[i]=(*diagl)[i-1]*X[i-1]+(*diagm)[i]*X[i]+(*diagu)[i]*X[i+1];
+                MPI_Send(&B[i],1,MPI_DOUBLE,1,0,MPI_COMM_WORLD);
             }
-            B[s/2-1]=(*diagl)[s/2-2]*Xu[s/2-2]+(*diagm)[s/2-1]*Xu[s/2-1]+(*diagu)[s/2-1]*a;
+            for (int i=s/2;i<s-1;i++){
+                MPI_Recv(&B[i],1,MPI_DOUBLE,1,1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            }
         }
         //RANK 1 PROCESS
         else {
-            //dissect X into lower vector
-            vector <double> Xl(s);
-            for (int i=s/2;i<s;i++){
-                Xl[i]=X[i];
-            }
-            b=Xl[s/2];
-            //receive Xu last term from rank 0 process
-            MPI_Recv(&a,1,MPI_DOUBLE,0,0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            //send Xl first term to rank 0 process
-            MPI_Send(&b,1,MPI_DOUBLE,0,1,MPI_COMM_WORLD);
             //generate lower B
-            for (int i=s/2+1;i<s-1;i++){
-                B[i]=(*diagl)[i-1]*Xl[i-1]+(*diagm)[i]*Xl[i]+(*diagu)[i]*Xl[i+1];
+            for (int i=s/2;i<s-1;i++){
+                B[i]=(*diagl)[i-1]*X[i-1]+(*diagm)[i]*X[i]+(*diagu)[i]*X[i+1];
+                MPI_Send(&B[i],1,MPI_DOUBLE,0,1,MPI_COMM_WORLD);
             }
-            B[s-1]=(*diagl)[s-2]*Xl[s-2]+(*diagm)[s-1]*Xl[s-1];
-            B[s/2]=(*diagl)[s/2-1]*b+(*diagm)[s/2]*Xl[s/2]+(*diagu)[s/2]*Xl[s/2+1];
+            B[s-1]=(*diagl)[s-2]*X[s-2]+(*diagm)[s-1]*X[s-1];
+            for (int i=1;i<s/2;i++){
+                MPI_Recv(&B[i],1,MPI_DOUBLE,0,0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            }
+            
         }
         return B;
     }
