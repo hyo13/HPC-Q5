@@ -9,21 +9,35 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include "mpi.h"
 #include "TriMatrix.h"
 using namespace std;
 
-int main() {
+int main(int argc, char* argv[]) {
     
     // INPUTS
     double L=1;
-    double Nx=10000;
-    double T=0.01;
-    double Nt=2000;
-    double alpha=0.001;
+    double Nx=20;
+    double T=5;
+    double Nt=5000;
+    double alpha=1;
+    
+    //calculate minimum input time step for Forward Euler to converge with v = or < 0.5
+    double dx=L/Nx;
+    int Ntmin=2*alpha*T/(pow(dx,2));
+    
+    //check that Nt is > or = Ntmax to make sure Forward Euler converges
+    if (Nt<Ntmin){
+        cout<<"ERROR: Nt is smaller than minimum time step allowed. Program Terminated."<<endl;
+        terminate();
+    }
+    if (fmod(Nx,2)==1){
+        cout<<"ERROR: Nx cannot be divided by 2 for parallel programming. Program Terminated."<<endl;
+        terminate();
+    }
     
     // INITIAL CALCULATIONS
     double dt=T/Nt;
-    double dx=L/Nx;
     double v=alpha*dt/pow(dx,2);
     
     // X-POSIION VECTOR
@@ -40,15 +54,26 @@ int main() {
         u0[i]=x[i]*(1-x[i]);
     }
     
-    //IMPLICIT TIME INTEGRATION
+    //CREATE TRI-DIAGONAL MATRIX
     double arg=0.5;
     TriMatrix ML(-arg*v,x.size());
     TriMatrix MR((1-arg)*v,x.size());
+    
+    //SETUP FOR PARALLEL PROGRAMMING
+    MPI_Init(&argc,&argv);
+    int rank;
+    int retval;
+    retval=MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    
+    //IMPLICIT TIME INTEGRATION
     vector <double> u0new(x.size());
     for (int i=0;i<Nt;i++){
-        u0new=ML/(MR*u0);
+        u0new=ML/(MR.MUL(u0,rank));
         u0=u0new;
     }
+    
+    //END PARALLEL PROGRAMMING
+    MPI_Finalize();
     
     //OUTPUT RESULTS
     for (int i=0;i<x.size();i++){

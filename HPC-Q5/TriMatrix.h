@@ -47,34 +47,22 @@ public:
         
     }
     
-    //Operator Overload: Calculate Multiplication of TriMatrix to Vector X
-    vector<double> operator* (vector<double> X){
+    //Function: Calculate Multiplication of TriMatrix to Vector X
+    vector<double> MUL(vector<double> X, int rank){
         double s=X.size();
+        vector <double> B(s);
         
-        //diagm multiply X
-        vector<double> Am(s);
-        for (int i=0;i<s;i++){
-            Am[i]=(*diagm)[i]*X[i];
+        if (rank==0){
+            B[0]=(*diagm)[0]*X[0]+(*diagu)[0]*X[1];
+            for (int i=1;i<s/2;i++){
+                B[i]=(*diagl)[i-1]*X[i-1]+(*diagm)[i]*X[i]+(*diagu)[i]*X[i+1];
+            }
         }
-        
-        //diagu multiply X
-        vector<double> Au(s);
-        for (int i=0;i<s-1;i++){
-            Au[i]=(*diagu)[i]*X[i+1];
-        }
-        Au[s-1]=0;
-        
-        //diagl multiply X
-        vector<double> Al(s);
-        Al[0]=0;
-        for (int i=1;i<s;i++){
-            Al[i]=(*diagl)[i-1]*X[i-1];
-        }
-        
-        //Superposition of Results
-        vector<double> B(s);
-        for (int i=0;i<s;i++){
-            B[i]=Am[i]+Au[i]+Al[i];
+        else {
+            for (int i=s/2;i<s-1;i++){
+                B[i]=(*diagl)[i-1]*X[i-1]+(*diagm)[i]*X[i]+(*diagu)[i]*X[i+1];
+            }
+            B[s-1]=(*diagl)[s-2]*X[s-2]+(*diagm)[s-1]*X[s-1];
         }
         return B;
     }
@@ -105,8 +93,5 @@ public:
     }
     
 };
-
-
-
 
 #endif /* defined(__HPC_Q1__TriMatrix__) */
