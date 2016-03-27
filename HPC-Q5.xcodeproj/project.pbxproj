@@ -204,7 +204,9 @@
 		8ED9AD161CA4BD1200DCA008 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"LIBRARY_SEARCH_PATHS[arch=*]" = /usr/local/lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"USER_HEADER_SEARCH_PATHS[arch=*]" = /usr/local/include;
 			};
 			name = Debug;
 		};
@@ -234,6 +236,7 @@
 				8ED9AD171CA4BD1200DCA008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
