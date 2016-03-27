@@ -17,10 +17,10 @@ int main(int argc, char* argv[]) {
     
     // INPUTS
     double L=1;
-    double Nx=1000;
-    double T=0.001;
-    double Nt=2500;
-    double alpha=0.01;
+    double Nx=20;
+    double T=1;
+    double Nt=1000;
+    double alpha=1;
     
     //calculate minimum input time step for Forward Euler to converge with v = or < 0.5
     double dx=L/Nx;

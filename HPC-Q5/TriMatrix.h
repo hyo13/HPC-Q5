@@ -49,28 +49,32 @@ public:
     
     //Function: Calculate Multiplication of TriMatrix to Vector X
     vector<double> MUL(vector<double> X, int rank){
-        double s=X.size();
+        int s=X.size();
         vector <double> B(s);
+        vector <double> b;
         //RANK 0 PROCESS
         if (rank==0){
-            //generate upper B
+            //generate upper B and send to rank 1 process
             B[0]=(*diagm)[0]*X[0]+(*diagu)[0]*X[1];
             for (int i=1;i<s/2;i++){
                 B[i]=(*diagl)[i-1]*X[i-1]+(*diagm)[i]*X[i]+(*diagu)[i]*X[i+1];
                 MPI_Send(&B[i],1,MPI_DOUBLE,1,0,MPI_COMM_WORLD);
             }
+            //receive from rank 1 process
             for (int i=s/2;i<s-1;i++){
                 MPI_Recv(&B[i],1,MPI_DOUBLE,1,1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
+
         }
         //RANK 1 PROCESS
         else {
-            //generate lower B
+            //generate lower B and send to rank 0 process
             for (int i=s/2;i<s-1;i++){
                 B[i]=(*diagl)[i-1]*X[i-1]+(*diagm)[i]*X[i]+(*diagu)[i]*X[i+1];
                 MPI_Send(&B[i],1,MPI_DOUBLE,0,1,MPI_COMM_WORLD);
             }
             B[s-1]=(*diagl)[s-2]*X[s-2]+(*diagm)[s-1]*X[s-1];
+            //Receive from rank 0 process
             for (int i=1;i<s/2;i++){
                 MPI_Recv(&B[i],1,MPI_DOUBLE,0,0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
